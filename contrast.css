@@ -1,0 +1,56 @@
+/* V5.6.2 — Contraste accesible para los dos temas */
+:root{--ui-text:#edf8f1;--ui-muted:#b6c9bd;--ui-panel:#12291e;--ui-border:rgba(190,230,207,.18);--ui-field:#091c13;--ui-field-text:#f2fff7;--ui-accent:#63e6a2}
+body:not(.light-theme) .home-ring-svg text{fill:#fff!important}
+body:not(.light-theme) .ring text{fill:#edf8f1!important}
+body.light-theme{--ui-text:#17271e;--ui-muted:#586d60;--ui-panel:#fff;--ui-border:#d6e4da;--ui-field:#fff;--ui-field-text:#17271e;--ui-accent:#087c4b}
+body.light-theme .home-ring-svg text{fill:#fff!important}
+body.light-theme .ring text{fill:#173b29!important}
+/* Contenido de pantallas: evitar textos heredados oscuros sobre tarjetas oscuras */
+body:not(.light-theme) .form-card,body:not(.light-theme) .stats-wrap,body:not(.light-theme) .history-wrap{color:var(--ui-text)}
+body:not(.light-theme) .list-card p,body:not(.light-theme) .journey-row small,body:not(.light-theme) .history-row small,body:not(.light-theme) .rest-row small,body:not(.light-theme) .fuel-history-row span,body:not(.light-theme) .document-row-main small,body:not(.light-theme) .calendar-note,body:not(.light-theme) .calendar-legend{color:var(--ui-muted)!important}
+body:not(.light-theme) .section-title,body:not(.light-theme) .analytics-heading strong{color:#a8edc2}
+body:not(.light-theme) .history-month summary b{color:#d8e9de;background:#254335}
+body:not(.light-theme) .history-weekly-rest{background:#1a3427;color:#d7e9dd;border-color:var(--ui-border)}
+body:not(.light-theme) .document-row-actions button{color:#edf8f1}
+body:not(.light-theme) .document-status{color:#baf2ce}
+body:not(.light-theme) .weekend-day{color:#e8f7ed}
+body:not(.light-theme) .calendar-day{color:#edf8f1}
+body:not(.light-theme) .payroll-dialog{color:#edf8f1}
+body:not(.light-theme) .payroll-dialog p,body:not(.light-theme) .payroll-dialog .note{color:#b6c9bd}
+body:not(.light-theme) .modal-card,body:not(.light-theme) dialog{color:#edf8f1}
+body:not(.light-theme) .modal-card p,body:not(.light-theme) dialog p{color:#b6c9bd}
+body:not(.light-theme) .form-card label,body:not(.light-theme) .settings-card label{color:#e5f4eb}
+body:not(.light-theme) input,body:not(.light-theme) select,body:not(.light-theme) textarea{color:#f2fff7}
+/* Modo claro: textos secundarios y elementos internos que conservaban colores claros */
+body.light-theme .form-card,body.light-theme .stats-wrap,body.light-theme .history-wrap{color:#17271e}
+body.light-theme .list-card p,body.light-theme .journey-row small,body.light-theme .history-row small,body.light-theme .rest-row small,body.light-theme .fuel-history-row span,body.light-theme .document-row-main small,body.light-theme .calendar-note,body.light-theme .calendar-legend{color:#586d60!important}
+body.light-theme .section-title,body.light-theme .analytics-heading strong{color:#145c3d}
+body.light-theme .history-month summary b{color:#435b4b;background:#e8f1eb}
+body.light-theme .history-weekly-rest{background:#f1f6f2;color:#435b4b;border-color:#d6e4da}
+body.light-theme .document-row-actions button{color:#294435}
+body.light-theme .document-status{color:#087a3d}
+body.light-theme .weekend-day{color:#294435}
+body.light-theme .calendar-day{color:#1b3024}
+body.light-theme .payroll-dialog{color:#17271e}
+body.light-theme .payroll-dialog p,body.light-theme .payroll-dialog .note{color:#586d60}
+body.light-theme .modal-card,body.light-theme dialog{color:#17271e}
+body.light-theme .modal-card p,body.light-theme dialog p{color:#586d60}
+body.light-theme .form-card label,body.light-theme .settings-card label{color:#213b2b}
+body.light-theme .form-card input,body.light-theme .form-card select,body.light-theme .form-card textarea,body.light-theme .settings-card input,body.light-theme .settings-card select,body.light-theme .settings-card textarea{color:#17271e}
+body.light-theme .form-card input::placeholder,body.light-theme .form-card textarea::placeholder,body.light-theme .settings-card input::placeholder{color:#718579}
+body.light-theme .tach-grid .tach-available-card{color:#fff}
+body.light-theme .tach-grid .tach-available-card strong,body.light-theme .tach-grid .tach-available-card span{color:#fff!important}
+body.light-theme .tach-grid .tach-main-card strong{color:#145c3d}
+body.light-theme .tach-grid .tach-main-card span{color:#586d60}
+body.light-theme .status-good{background:#e4f5eb;color:#086b3e}
+body.light-theme .status-data{background:#edf1ee;color:#43564a}
+body.light-theme .status-warn{background:#fff3d7;color:#705000}
+body.light-theme .status-bad{background:#ffe4e1;color:#a11f1a}
+/* Controles e iconos de compartir */
+.share-btn{display:flex;align-items:center;justify-content:center;gap:9px;min-height:50px;font-weight:850}
+.share-icon{width:22px;height:22px;flex:0 0 22px;display:block}
+.share-whatsapp{background:linear-gradient(145deg,#25d366,#128c4a)!important;color:#fff!important;border-color:rgba(255,255,255,.24)!important}
+.share-email{background:linear-gradient(145deg,#3195df,#1767ad)!important;color:#fff!important}
+body.light-theme .share-whatsapp,body.light-theme .share-email{color:#fff!important}
+.share-btn:focus-visible{outline:3px solid #f4c95d;outline-offset:3px}
+@media(max-width:390px){.share-btn{font-size:12px;gap:6px;padding:12px 7px}.share-icon{width:20px;height:20px;flex-basis:20px}}
