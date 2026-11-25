@@ -2,6 +2,16 @@ const DB_KEY="truckWorkLog.v1";
 const $=id=>document.getElementById(id);
 const DEFAULT_STATE={truckPlate:"",journeys:[],fuels:[],documents:[],resetStatsAt:"",resetHistoryAt:"",statsPeriodStartDay:26,tach:{weeklyDriveMin:0,weeklyDriveWeekKey:"",biweeklyDriveMin:0,biweeklyBaseAt:"",reducedDailyUsed:0,reducedDailyBaseAt:"",tenHourUsed:0,tenHourWeekKey:"",pendingCompMin:0,consecutiveReducedWeekly:0,lastWeeklyRestEnd:"",lastWeeklyRestType:"45",lastReturnDate:"",weeklyRests:[],baselineAt:"",initialSetupDone:false,calcVersion:"",lastRecalculatedAt:"",weeklyCalc:{},crossWeekBaselineAt:"",manualTachBaselineAt:""}};
 const state=loadState();
+// Exposición de solo lectura para los indicadores visuales de la PWA.
+window.getNoriegaJourneyVisualData=()=>{
+  const open=state.journeys.find(j=>j.status==="OPEN");
+  if(!open)return null;
+  const previous=state.journeys.filter(j=>j.status==="CLOSED"&&j.endDate&&new Date(j.endDate)<=new Date(open.startDate)).sort((a,b)=>new Date(b.endDate)-new Date(a.endDate))[0];
+  const restMin=previous?Math.max(0,Math.round((new Date(open.startDate)-new Date(previous.endDate))/60000)):null;
+  // Descanso diario normal (11 h) -> ventana de 13 h; reducido (9 h) -> ventana de 15 h.
+  const limitMin=restMin===null?780:(restMin>=540&&restMin<660?900:780);
+  return {startDate:open.startDate,restMin,limitMin};
+};
 function loadState(){try{const raw=JSON.parse(localStorage.getItem(DB_KEY)||"{}");const merged=Object.assign({},DEFAULT_STATE,raw,{tach:Object.assign({},DEFAULT_STATE.tach,raw.tach||{})});if(merged.truckPlate&&raw.tach&&raw.tach.baselineAt&&!Object.prototype.hasOwnProperty.call(raw.tach,"initialSetupDone"))merged.tach.initialSetupDone=true;return merged}catch(e){return JSON.parse(JSON.stringify(DEFAULT_STATE))}}
 function saveState(){localStorage.setItem(DB_KEY,JSON.stringify(state));updateUI()}
 function uid(prefix){return prefix+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)}
