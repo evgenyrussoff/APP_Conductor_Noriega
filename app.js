@@ -8,9 +8,16 @@ window.getNoriegaJourneyVisualData=()=>{
   if(!open)return null;
   const previous=state.journeys.filter(j=>j.status==="CLOSED"&&j.endDate&&new Date(j.endDate)<=new Date(open.startDate)).sort((a,b)=>new Date(b.endDate)-new Date(a.endDate))[0];
   const restMin=previous?Math.max(0,Math.round((new Date(open.startDate)-new Date(previous.endDate))/60000)):null;
-  // Descanso diario normal (11 h) -> ventana de 13 h; reducido (9 h) -> ventana de 15 h.
-  const limitMin=restMin===null?780:(restMin>=540&&restMin<660?900:780);
-  return {startDate:open.startDate,restMin,limitMin};
+  // La ventana de 15 h depende de que quede al menos un descanso diario reducido disponible.
+  // El contador es el mismo que se muestra en Control Tacógrafo (3 como máximo entre descansos semanales).
+  let tach=ensureTachMeta();
+  const lastCalc=tach.lastRecalculatedAt?new Date(tach.lastRecalculatedAt).getTime():0;
+  if(!lastCalc||lastCalc<new Date(open.startDate).getTime()||Date.now()-lastCalc>30000){recalculateTachograph(false);tach=ensureTachMeta();}
+  const configured=!!(tach.initialSetupDone||tach.baselineAt);
+  const reducedUsed=Math.max(0,Number(tach.reducedDailyUsed)||0);
+  const reducedRemaining=configured?Math.max(0,3-reducedUsed):0;
+  const limitMin=reducedRemaining>0?900:780;
+  return {startDate:open.startDate,restMin,limitMin,reducedRemaining};
 };
 function loadState(){try{const raw=JSON.parse(localStorage.getItem(DB_KEY)||"{}");const merged=Object.assign({},DEFAULT_STATE,raw,{tach:Object.assign({},DEFAULT_STATE.tach,raw.tach||{})});if(merged.truckPlate&&raw.tach&&raw.tach.baselineAt&&!Object.prototype.hasOwnProperty.call(raw.tach,"initialSetupDone"))merged.tach.initialSetupDone=true;return merged}catch(e){return JSON.parse(JSON.stringify(DEFAULT_STATE))}}
 function saveState(){localStorage.setItem(DB_KEY,JSON.stringify(state));updateUI()}
@@ -37,7 +44,7 @@ $("themeToggleBtn")?.addEventListener("click",()=>{if(autoNightOn()&&isNightNow(
 $("nightAutoBtn")?.addEventListener("click",()=>{localStorage.setItem("noriegaAutoNight_v1",autoNightOn()?"off":"on");applyThemePreference();toast(autoNightOn()?"Modo noche automático activado":"Modo noche automático desactivado")});
 // Microrespuesta háptica opcional: funciona solo en navegadores/dispositivos compatibles.
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled||!navigator.vibrate)return;if(b.matches(".save-btn,.start,.finish,.main-action,.secondary-action,.back"))navigator.vibrate(8)},{passive:true});
-let swipeStartX=0,swipeStartY=0;document.addEventListener("touchstart",e=>{const t=e.touches[0];swipeStartX=t.clientX;swipeStartY=t.clientY},{passive:true});document.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-swipeStartX,dy=t.clientY-swipeStartY;if(swipeStartX<=25&&dx>=70&&Math.abs(dx)>Math.abs(dy)*1.3){const active=document.querySelector(".screen.active");if(active&&active.id!=="home"){if(active.id==="journeyDetailScreen")backHistory();else if(active.id==="consumptionHistoryScreen"||active.id==="kilometresHistoryScreen")show("statsScreen");else backHome();}}},{passive:true});
+let swipeStartX=0,swipeStartY=0;document.addEventListener("touchstart",e=>{const t=e.touches[0];swipeStartX=t.clientX;swipeStartY=t.clientY},{passive:true});document.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-swipeStartX,dy=t.clientY-swipeStartY;if(swipeStartX<=25&&dx>=70&&Math.abs(dx)>Math.abs(dy)*1.3){const active=document.querySelector(".screen.active");if(active&&active.id!=="home"){if(active.id==="journeyDetailScreen")backHistory();else if(active.id==="consumptionHistoryScreen"||active.id==="kilometresHistoryScreen"||active.id==="salaryHistoryScreen")show("statsScreen");else backHome();}}},{passive:true});
 function initSelects(){for(let i=0;i<=24;i++){$("driveHours").insertAdjacentHTML("beforeend",`<option value="${i}">${i} ${I18N.t("hours")}</option>`);$("editDriveHours").insertAdjacentHTML("beforeend",`<option value="${i}">${i} ${I18N.t("hours")}</option>`)}for(let i=0;i<60;i++){$("driveMinutes").insertAdjacentHTML("beforeend",`<option value="${i}">${String(i).padStart(2,"0")} ${I18N.t("minutes")}</option>`);$("editDriveMinutes").insertAdjacentHTML("beforeend",`<option value="${i}">${String(i).padStart(2,"0")} ${I18N.t("minutes")}</option>`)} }
 function setNow(id){$(id).value=nowLocalInput()}
 document.querySelectorAll("[data-now]").forEach(b=>b.addEventListener("click",()=>setNow(b.dataset.now)));

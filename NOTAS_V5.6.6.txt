@@ -1,0 +1,27 @@
+APP CONDUCTOR NORIEGA — V5.6.6
+
+Cambios incluidos
+
+1. Indicador de disponibilidad de jornada en la pantalla principal
+- El círculo ahora utiliza el mismo contador de descansos diarios reducidos que Control Tacógrafo.
+- Si queda al menos un descanso diario reducido disponible (de un máximo de 3 entre descansos semanales), el indicador muestra el límite visual de 15 h.
+- Cuando ya se han utilizado los 3 descansos reducidos, muestra el límite visual de 13 h.
+- El contador se recalcula periódicamente para evitar que el indicador de la pantalla principal se quede con un valor antiguo.
+- El indicador sigue siendo una referencia visual orientativa, no una validación legal del tacógrafo.
+
+2. Nuevo historial de salario en Estadísticas
+- Se añade el botón «Salario estimado · Meses y años» al final de Estadísticas.
+- Agrupa los importes por periodos salariales del día 26 al 25 y los presenta dentro de cada año según el mes de cierre del periodo.
+- Cada periodo muestra salario base + kilómetros remunerados × tarifa por km + incentivos.
+- Los cierres archivados conservan el importe calculado y las tarifas utilizadas.
+- Los periodos sin archivo se muestran como estimaciones calculadas con los datos disponibles.
+- Los cambios de salario base y tarifa por km se registran desde el siguiente día 26, evitando aplicarlos a mitad de un periodo.
+
+3. Versión y caché
+- Versión actualizada a v5.6.6.
+- Caché PWA actualizado para forzar la carga de los nuevos archivos.
+
+Pruebas técnicas realizadas
+- Comprobación sintáctica de JavaScript.
+- Validación de integridad del ZIP.
+- No se ha realizado una prueba visual en un iPhone físico.

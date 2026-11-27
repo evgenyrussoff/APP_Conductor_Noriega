@@ -25,7 +25,7 @@
         <div class="brand-block">
           <div class="brand">
             <img src="icon-192.png" alt="" class="brand-icon">
-            <div class="brand-copy"><div class="brand-heading-row"><div class="brand-title">APP Conductor Noriega</div><span id="appVersion" class="app-version">v5.6.0</span></div><div class="brand-sub">Jornadas · Repostajes · Estadísticas</div></div>
+            <div class="brand-copy"><div class="brand-heading-row"><div class="brand-title">APP Conductor Noriega</div><span id="appVersion" class="app-version">v5.6.6</span></div><div class="brand-sub">Jornadas · Repostajes · Estadísticas</div></div>
           </div>
           <div class="sync-pill" id="syncStatus">📱 Datos se guardan en éste dispositivo</div>
         </div>
@@ -123,6 +123,7 @@
         </div>
         <button id="consumptionHistoryBtn" class="secondary-action wide consumption-history-btn" type="button">⛽ Consumo medio de combustible · Meses y años</button>
         <button id="kilometresHistoryBtn" class="secondary-action wide consumption-history-btn" type="button">🚚 Kilómetros recorridos · Meses y años</button>
+        <button id="salaryHistoryBtn" class="secondary-action wide consumption-history-btn" type="button">💶 Salario estimado · Meses y años</button>
       </div>
     </section>
 
@@ -134,6 +135,11 @@
     <section id="kilometresHistoryScreen" class="screen">
       <header class="page-head"><button id="kilometresHistoryBack" class="back" type="button">←</button><h1 id="kilometresHistoryTitle">Kilómetros recorridos</h1></header>
       <div class="history-wrap"><p class="note" id="kilometresHistoryNote">Kilómetros por periodos mensuales configurados, del día 26 al día 25.</p><div id="kilometresHistoryList"></div></div>
+    </section>
+
+    <section id="salaryHistoryScreen" class="screen">
+      <header class="page-head"><button id="salaryHistoryBack" class="back" type="button">←</button><h1>Salario estimado</h1></header>
+      <div class="history-wrap"><p class="note">Estimación por periodos salariales del día 26 al 25: salario base + kilómetros remunerados × tarifa + incentivos. Los periodos cerrados conservan los importes archivados.</p><div id="salaryHistoryList"></div></div>
     </section>
 
     <section id="historyScreen" class="screen">

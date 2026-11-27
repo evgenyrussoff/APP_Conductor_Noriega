@@ -1,4 +1,4 @@
-/* V5.6.1 - Detalles visuales inspirados en Claude. Solo lectura; no modifica datos. */
+/* V5.6.6 - Detalles visuales inspirados en Claude. Solo lectura; no modifica datos. */
 (()=>{
  const $=id=>document.getElementById(id), reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
  const parseMins=t=>{const m=/(\d+):(\d{2})/.exec(t||'');return m?+m[1]*60+ +m[2]:0};

@@ -1,4 +1,4 @@
-/* APP Conductor Noriega V5.6.5 - módulo de incentivos y cierre mensual */
+/* APP Conductor Noriega V5.6.6 - módulo de incentivos y cierre mensual */
 (()=>{
  const $=id=>document.getElementById(id),fmt=n=>Number(n||0).toLocaleString('es-ES',{maximumFractionDigits:2}),iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
  const ROUTES=[['Ferry Bilbao–Portsmouth',850],['Ferry Santander–Portsmouth',860],['Ferry Caen–Portsmouth',185],['Ferry Calais–Dover',50],['Ferry Dover–Calais',50],['Ferry Barcelona–Civitavecchia',1269],['Ferry Civitavecchia–Barcelona',1269],['Ferry Brindisi–Igumenitsa',265],['Ferry Igumenitsa–Brindisi',265],['Tren Calais–Folkestone',50],['Tren Folkestone–Calais',50]];
@@ -15,8 +15,8 @@
  function archivePeriod(p,reportText,source='automatico'){
    const existing=archives().find(x=>x.periodKey===p.key);
    if(existing)return existing;
-   const t=totals(p),text=reportText||report('wa',p);
-   const item={periodKey:p.key,label:p.label,start:iso(p.start),end:iso(p.end),savedAt:new Date().toISOString(),source,totals:{truck:t.truck,ferry:t.ferry,totalKm:t.totalKm,money:t.money,weekend:t.weekend,weekends:t.weekends,baseSalary:Number(P().baseSalary)||0,kmRate:Number(P().kmRate)||0},reportText:text};
+   const t=totals(p),rates=ratesForPeriod(p),text=reportText||report('wa',p);
+   const item={periodKey:p.key,label:p.label,start:iso(p.start),end:iso(p.end),savedAt:new Date().toISOString(),source,totals:{truck:t.truck,ferry:t.ferry,totalKm:t.totalKm,money:t.money,weekend:t.weekend,weekends:t.weekends,baseSalary:rates.baseSalary,kmRate:rates.kmRate,salaryEstimate:rates.baseSalary+t.totalKm*rates.kmRate+t.money},reportText:text};
    P().archives.push(item);saveState();return item;
  }
  function displayPeriod(){
@@ -42,7 +42,47 @@
  function renderWeekends(){const p=displayPeriod(),auto=autoWeekends(p),saved=P().manualWeekends.filter(x=>x.periodKey===p.key);$('weekendSelectionList').innerHTML=pairs(p).map(w=>{const detected=auto.has(w.key),record=saved.find(x=>x.weekendKey===w.key),selected=record?.selectedDates||[];return `<div class="weekend-pair"><strong>${w.label}</strong><small>${detected?'Detectado por jornada registrada':record?'Añadido manualmente':'Selecciona uno o ambos días'}</small><div>${w.dates.map(d=>`<label class="weekend-day"><input type="checkbox" data-weekend="${w.key}" value="${d}" ${detected?'disabled':''} ${selected.includes(d)?'checked':''}><span>${new Date(d+'T12:00:00').toLocaleDateString('es-ES',{weekday:'short',day:'2-digit'})}</span></label>`).join('')}</div>${detected||record?'<b>50 €</b>':''}</div>`}).join('')||'<p>No hay fines de semana en este periodo.</p>';
  $('weekendSelectionList').querySelectorAll('[data-weekend]').forEach(el=>el.addEventListener('change',()=>{const key=el.dataset.weekend;let rec=P().manualWeekends.find(x=>x.periodKey===p.key&&x.weekendKey===key);if(!rec){rec={id:uid('WE'),periodKey:p.key,weekendKey:key,selectedDates:[]};P().manualWeekends.push(rec)}rec.selectedDates=[...$('weekendSelectionList').querySelectorAll(`[data-weekend="${key}"]:checked`)].map(x=>x.value);if(!rec.selectedDates.length)P().manualWeekends=P().manualWeekends.filter(x=>x.id!==rec.id);saveState();renderWeekends();renderSummary()}));}
  function totals(p){const js=allPeriodJourneys(p),manual=manualItems(p),journeyItems=js.flatMap(j=>j.payrollItems||[]),all=[...journeyItems,...manual],truck=js.reduce((n,j)=>n+Number(j.kmDay||0),0),ferry=all.filter(x=>x.kind==='km').reduce((n,x)=>n+Number(x.km||0),0),money=all.filter(x=>x.kind==='money').reduce((n,x)=>n+Number(x.amount||0),0),weekend=weekendCount(p)*Number(P().moneyRates['Fin de semana fuera']);return {js,all,truck,ferry,totalKm:truck+ferry,money:money+weekend,weekend,weekends:weekendCount(p)}}
- function renderSummary(){const p=displayPeriod(),t=totals(p);$('payrollPeriodTitle').textContent=`Periodo salarial · ${p.label}`;$('payrollPeriodRange').textContent=`${p.start.toLocaleDateString('es-ES')} – ${p.end.toLocaleDateString('es-ES')}`;$('payrollSummary').innerHTML=`<div><span>Kilómetros de camión</span><strong>${fmt(t.truck)} km</strong></div><div><span>Kilómetros Ferry / Tren</span><strong>${fmt(t.ferry)} km</strong></div><div><span>Total kilómetros remunerados</span><strong>${fmt(t.totalKm)} km</strong></div><div><span>Fines de semana fuera</span><strong>${t.weekends} × ${fmt(P().moneyRates['Fin de semana fuera'])} €</strong></div><div><span>Otros incentivos</span><strong>${fmt(t.money-t.weekend)} €</strong></div><div><span>Salario base</span><strong>${fmt(P().baseSalary)} €</strong></div><div><span>Estimación base + km + incentivos</span><strong>${fmt(P().baseSalary+t.totalKm*P().kmRate+t.money)} €</strong></div>`}
+ function renderSummary(){const p=displayPeriod(),t=totals(p),rates=ratesForPeriod(p);$('payrollPeriodTitle').textContent=`Periodo salarial · ${p.label}`;$('payrollPeriodRange').textContent=`${p.start.toLocaleDateString('es-ES')} – ${p.end.toLocaleDateString('es-ES')}`;$('payrollSummary').innerHTML=`<div><span>Kilómetros de camión</span><strong>${fmt(t.truck)} km</strong></div><div><span>Kilómetros Ferry / Tren</span><strong>${fmt(t.ferry)} km</strong></div><div><span>Total kilómetros remunerados</span><strong>${fmt(t.totalKm)} km</strong></div><div><span>Fines de semana fuera</span><strong>${t.weekends} × ${fmt(P().moneyRates['Fin de semana fuera'])} €</strong></div><div><span>Otros incentivos</span><strong>${fmt(t.money-t.weekend)} €</strong></div><div><span>Salario base</span><strong>${fmt(rates.baseSalary)} €</strong></div><div><span>Estimación base + km + incentivos</span><strong>${fmt(rates.baseSalary+t.totalKm*rates.kmRate+t.money)} €</strong></div>`}
+ function rateEffectiveDate(value){if(!value)return '';const d=new Date(String(value).slice(0,10)+'T12:00:00');if(isNaN(d))return '';const day=d.getDate();return iso(new Date(d.getFullYear(),d.getMonth(),26));}
+ function ratesForPeriod(p){
+   const saved=(P().rates||[]).map(r=>({date:rateEffectiveDate(r.date),baseSalary:Number(r.baseSalary),kmRate:Number(r.kmRate)})).filter(r=>r.date).sort((a,b)=>a.date.localeCompare(b.date));
+   if(!saved.length)return {baseSalary:Number(P().baseSalary)||0,kmRate:Number(P().kmRate)||0};
+   const eligible=saved.filter(r=>r.date<=iso(p.start));
+   if(eligible.length){const r=eligible[eligible.length-1];return {baseSalary:Number.isFinite(r.baseSalary)?r.baseSalary:1100,kmRate:Number.isFinite(r.kmRate)?r.kmRate:.14};}
+   return {baseSalary:1100,kmRate:.14};
+ }
+ function salaryHistoryPeriods(){
+   const starts=[],addStart=value=>{if(!value)return;const d=new Date(String(value).length===10?value+'T12:00:00':value);if(!isNaN(d))starts.push(period(d).start)};
+   (state.journeys||[]).filter(j=>j.status==='CLOSED'&&j.endDate).forEach(j=>addStart(j.endDate));
+   (P().manualItems||[]).forEach(x=>addStart(x.date||x.periodKey));
+   (P().manualWeekends||[]).forEach(x=>addStart(x.periodKey));
+   archives().forEach(x=>addStart(x.periodKey));
+   starts.push(period(new Date()).start);
+   const first=new Date(Math.min(...starts.map(d=>d.getTime()))),last=period(new Date()).start,rows=[];
+   let cursor=new Date(first.getFullYear(),first.getMonth(),26);
+   for(let i=0;i<120&&cursor<=last;i++){
+     const p=period(cursor);rows.push(p);cursor=new Date(cursor.getFullYear(),cursor.getMonth()+1,26);
+   }
+   return rows.reverse();
+ }
+ function salaryForPeriod(p){
+   const archivedRow=archives().find(x=>x.periodKey===p.key),rates=ratesForPeriod(p);
+   if(archivedRow&&archivedRow.totals){const t=archivedRow.totals,base=Number(t.baseSalary??rates.baseSalary)||0,kmRate=Number(t.kmRate??rates.kmRate)||0,totalKm=Number(t.totalKm)||0,money=Number(t.money)||0;return {base,kmRate,totalKm,money,total:Number(t.salaryEstimate??(base+totalKm*kmRate+money)),archived:true};}
+   const t=totals(p),base=rates.baseSalary,kmRate=rates.kmRate;
+   return {base,kmRate,totalKm:t.totalKm,money:t.money,total:base+t.totalKm*kmRate+t.money,archived:false};
+ }
+ function renderSalaryHistory(){
+   const list=$('salaryHistoryList');if(!list)return;
+   const periods=salaryHistoryPeriods(),groups=new Map();
+   periods.forEach(p=>{const row=salaryForPeriod(p),year=p.end.getFullYear();if(!groups.has(year))groups.set(year,[]);groups.get(year).push({p,...row})});
+   const html=[...groups.entries()].sort((a,b)=>b[0]-a[0]).map(([year,rows])=>{
+     const annual=rows.reduce((sum,x)=>sum+x.total,0),months=rows.map(x=>`<div class="consumption-month-row"><strong>${x.p.label}</strong><span>${fmt(x.total)} €</span><small>${x.p.start.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'})} – ${x.p.end.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'})} · Base ${fmt(x.base)} € + ${fmt(x.totalKm)} km × ${fmt(x.kmRate)} € + incentivos ${fmt(x.money)} €${x.archived?' · Archivado':' · Estimación'}</small></div>`).join('');
+     return `<details class="history-year" ${year===new Date().getFullYear()?'open':''}><summary><span>▼ ${year}</span><b>${fmt(annual)} €</b></summary><div class="consumption-year-body">${months}</div></details>`;
+   }).join('');
+   list.innerHTML=html||'<div class="settings-card">Todavía no hay periodos salariales para mostrar.</div>';
+ }
+ $('salaryHistoryBtn')?.addEventListener('click',()=>{renderSalaryHistory();show('salaryHistoryScreen')});
+ $('salaryHistoryBack')?.addEventListener('click',()=>show('statsScreen'));
  function weekendLines(p){const auto=autoWeekends(p),manual=P().manualWeekends.filter(x=>x.periodKey===p.key&&x.selectedDates?.length),keys=new Set([...auto,...manual.map(x=>x.weekendKey)]);return [...keys].sort().map(key=>{const w=pairs(p).find(x=>x.key===key),m=manual.find(x=>x.weekendKey===key);const dates=m?.selectedDates?.length?m.selectedDates:w?.dates||[];const label=dates.map(d=>new Date(d+'T12:00:00').toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'})).join(' y ');return `Fin de semana fuera (${label}): ${fmt(P().moneyRates['Fin de semana fuera'])} €`})}
  function report(channel,p=displayPeriod()){const t=totals(p),lines=[channel==='wa'&&P().whatsAppName?`Buenos días ${P().whatsAppName}!`:'Buenos días!','','Según mis cálculos tengo:',`${fmt(t.totalKm)} km${t.ferry?` (incluidos ${fmt(t.ferry)} km de Ferry o Tren)`:''}`];const routeRows=t.all.filter(x=>x.kind==='km');routeRows.filter(x=>x.source==='journey').forEach(x=>lines.push(`${x.label} (${x.date}): ${fmt(x.km)} km`));const grouped={};routeRows.filter(x=>x.source!=='journey').forEach(x=>{grouped[x.label]=grouped[x.label]||{n:0,km:0};grouped[x.label].n++;grouped[x.label].km+=Number(x.km)});Object.entries(grouped).forEach(([k,v])=>lines.push(`${k}: ${v.n} trayecto(s), ${fmt(v.km)} km`));lines.push(...weekendLines(p));t.all.filter(x=>x.kind==='money').forEach(x=>lines.push(`${x.label}${x.date?` (${new Date(x.date+'T12:00:00').toLocaleDateString('es-ES')})`:''}: ${fmt(x.amount)} €`));lines.push('','Creo que es todo.','','Un saludo!');return lines.join('\n')}
  function open(){displayPeriod();renderSummary();renderWeekends();renderManualList();$('payrollReportText').value='';generatedPeriodKey='';show('monthlyCloseScreen')}
@@ -70,7 +110,7 @@
  $('modifyPayrollSettings')?.addEventListener('click',()=>setPayrollEditMode(true));
  $('payrollSettingsBack')?.addEventListener('click',()=>show('settingsScreen'));
  $('payrollSettingsBackTop')?.addEventListener('click',()=>show('settingsScreen'));
- $('savePayrollSettings')?.addEventListener('click',()=>{const p=P();p.baseSalary=Math.max(0,Number($('payrollBaseSalary').value)||0);p.kmRate=Math.max(0,Number($('payrollKmRate').value)||0);p.whatsAppName=$('payrollWhatsAppName').value.trim();p.whatsAppNumber=$('payrollWhatsAppNumber').value.trim();p.email=$('payrollEmail').value.trim();$('payrollRateEditor').querySelectorAll('[data-rate-index]').forEach(el=>{const item=MONEY[Number(el.dataset.rateIndex)];p.moneyRates[item[0]]=Math.max(0,Number(el.value)||0)});p.rates.push({date:iso(new Date()),baseSalary:p.baseSalary,kmRate:p.kmRate});saveState();setPayrollEditMode(false);toast('Configuración salarial guardada')});
+ $('savePayrollSettings')?.addEventListener('click',()=>{const p=P();p.baseSalary=Math.max(0,Number($('payrollBaseSalary').value)||0);p.kmRate=Math.max(0,Number($('payrollKmRate').value)||0);p.whatsAppName=$('payrollWhatsAppName').value.trim();p.whatsAppNumber=$('payrollWhatsAppNumber').value.trim();p.email=$('payrollEmail').value.trim();$('payrollRateEditor').querySelectorAll('[data-rate-index]').forEach(el=>{const item=MONEY[Number(el.dataset.rateIndex)];p.moneyRates[item[0]]=Math.max(0,Number(el.value)||0)});const today=new Date(),effectiveStart=new Date(today.getFullYear(),today.getMonth(),26);const effectiveDate=iso(effectiveStart);p.rates=p.rates.filter(r=>rateEffectiveDate(r.date)!==effectiveDate);p.rates.push({date:effectiveDate,baseSalary:p.baseSalary,kmRate:p.kmRate});saveState();setPayrollEditMode(false);toast('Configuración salarial guardada')});
  const originalTach=renderTach;renderTach=function(){originalTach();tachColors()};
  function tachColors(){const weekly=Math.max(0,3360-calcWeekTotal(weekStart(new Date()))),bi=Math.max(0,5400-biweeklyTotal()),left=Math.min(weekly,bi),level=left<270?'red':left<540?'yellow':'white';const b=$('tachBtn'),c=document.querySelector('.tach-available-card');[b,c].forEach(el=>{if(!el)return;el.classList.remove('tach-alert-yellow','tach-alert-red');if(level==='yellow')el.classList.add('tach-alert-yellow');if(level==='red')el.classList.add('tach-alert-red')})}
  setInterval(()=>{try{tachColors()}catch(e){}},15000);
